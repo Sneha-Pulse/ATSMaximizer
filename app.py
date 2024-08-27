@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit_option_menu import option_menu
 from PyPDF2 import PdfReader
 import os
 from dotenv import load_dotenv
@@ -59,8 +60,25 @@ def get_ats_optimization_response(model, pdf_text, job_description):
         return None
 
 def main():
-    st.title("ResumeATS Pro")
-    
+    st.set_page_config(layout="wide")
+
+    # Sidebar - Logo and File Upload
+    with st.sidebar:
+        st.image("C:/Users/HP/Desktop/ATSMaximizer/logo.jpg", use_column_width=True)
+        uploaded_file = st.file_uploader("Upload your resume (PDF)", type=["pdf"])
+
+    st.title("ATSMaximiser")
+
+    # Main Menu - Home, Quick Scan, Detailed Analysis, ATS Optimization, Question Answering
+    selected = option_menu(
+        menu_title=None, 
+        options=["Home", "Quick Scan", "Detailed Analysis", "ATS Optimization", "Question Answering"],
+        icons=["house", "search", "list", "layers", "question-circle"],
+        menu_icon="cast", 
+        default_index=0, 
+        orientation="horizontal"
+    )
+
     # Initialize session state keys if they don't exist
     if 'response' not in st.session_state:
         st.session_state['ats_response'] = None
@@ -73,40 +91,57 @@ def main():
 
     model = configure_model(api_key)
     
-    uploaded_file = st.file_uploader("Upload your resume (PDF)", type=["pdf"])
     if uploaded_file:
         pdf_text = read_pdf(uploaded_file)
         if not pdf_text:
             return
         st.session_state['pdf_text'] = pdf_text
 
-    job_description = st.text_area("Paste the job description for ATS Optimization:")
-    analysis_option = st.radio("Choose analysis type:", ["Quick Scan", "Detailed Analysis", "ATS Optimization"])
+    if selected == "Home":
+        st.write("Welcome to ATSMaximiser! Upload your resume on the left and start analyzing.")
     
-            
-    if st.button("Analyze Resume"):
-        if uploaded_file is not None:
-            with st.spinner('Analyzing resume...'):
-                if job_description and analysis_option == "ATS Optimization":
-                    ats_response = get_ats_optimization_response(model, pdf_text, job_description)
-                else:
-                    ats_response = analyze_resume(model, pdf_text, analysis_option)
+    if selected == "Quick Scan":
+        st.write("Performing a Quick Scan of your resume...")
+        if uploaded_file:
+            if st.button("Quick Scan Now"):
+                ats_response = analyze_resume(model, st.session_state['pdf_text'], "Quick Scan")
                 if ats_response:
                     st.session_state['ats_response'] = ats_response
                     st.write(ats_response)
-    
-    user_question = st.text_input("Ask me anything about your resume or the analysis:")
-    if user_question:
-        chat_prompt = f"""
-        Based on the resume and analysis above, answer the following question:
-        {user_question}
-        
-        Resume text: {st.session_state['pdf_text']}
-        Previous analysis: {st.session_state['ats_response']}
-        """
-        chat_response = analyze_resume(model, chat_prompt, "Custom Question")
-        if chat_response:
-            st.write(chat_response)
+
+    if selected == "Detailed Analysis":
+        st.write("Performing a Detailed Analysis of your resume...")
+        if uploaded_file:
+            if st.button("Detailed Analysis Now"):
+                ats_response = analyze_resume(model, st.session_state['pdf_text'], "Detailed Analysis")
+                if ats_response:
+                    st.session_state['ats_response'] = ats_response
+                    st.write(ats_response)
+
+    if selected == "ATS Optimization":
+        st.write("Optimizing your resume for ATS...")
+        job_description = st.text_area("Paste the job description for ATS Optimization:")
+        if uploaded_file and job_description:
+            if st.button("Optimize Now"):
+                ats_response = get_ats_optimization_response(model, st.session_state['pdf_text'], job_description)
+                if ats_response:
+                    st.session_state['ats_response'] = ats_response
+                    st.write(ats_response)
+
+    if selected == "Question Answering":
+        st.write("Ask questions about your resume or analysis...")
+        user_question = st.text_input("Ask me anything about your resume or the analysis:")
+        if user_question:
+            chat_prompt = f"""
+            Based on the resume and analysis above, answer the following question:
+            {user_question}
+            
+            Resume text: {st.session_state['pdf_text']}
+            Previous analysis: {st.session_state['ats_response']}
+            """
+            chat_response = analyze_resume(model, chat_prompt, "Custom Question")
+            if chat_response:
+                st.write(chat_response)
 
 if __name__ == "__main__":
     main()
