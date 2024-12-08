@@ -1,4 +1,4 @@
-# ATS Maximizer
+# ATSMaximizer
 
 
 **ATSMaximiser** is a Streamlit-based web application designed to help job seekers optimize their resumes for Applicant Tracking Systems (ATS). The tool analyzes resumes, identifies ATS-related issues, and provides actionable recommendations to improve your chances of getting shortlisted for your dream job.
